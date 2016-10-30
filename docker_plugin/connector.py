@@ -13,16 +13,12 @@
 #    under the License.
 
 import docker
-from docker import errors
 
 
 class DockerConnector(object):
 
     def __init__(self, base_url):
-        try:
-            self._client = docker.Client(base_url=base_url, timeout=60)
-        except errors.DockerException as e:
-            pass
+        self._client = docker.Client(base_url=base_url, timeout=60)
 
     @property
     def connection(self):
@@ -35,20 +31,16 @@ class DockerConnector(object):
 
 class DockerContainer(object):
 
-    def __init__(self, name, image, host_bind_port, container_bind_port, docker_daemon_url):
-        self.port_binding = {host_bind_port, container_bind_port}
+    def __init__(self, name, image, port_bindings, docker_daemon_url):
+        self.port_binding = port_bindings
         self.name = name
         self.image = image
         self.connection = DockerConnector(docker_daemon_url).connection
 
-    def _get_exposed_ports(self, ports):
-        return dict(ports).values() if ports else None
-
-    def _create_host_config(self, bind_ports=None, volumes=None):
+    def _create_host_config(self, volumes=None):
         return self.connection.create_host_config(
-            port_bindings=bind_ports, binds=volumes)
+            port_bindings=self.port_binding, binds=volumes)
 
-    def create_container(self, name, image, env=None, volumes=None):
+    def create_container(self, env):
         return self.connection.create_container(
-            image, name=name, environment=env,
-            volumes=volumes, ports=self.port_binding)
+            self.image, name=self.name, environment=env, ports=self.port_binding)

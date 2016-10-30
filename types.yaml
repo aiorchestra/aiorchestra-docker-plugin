@@ -8,3 +8,28 @@ node_types:
       docker_daemon_url:
         type: string
         required: true
+      name:
+        type: string
+      image:
+        type: string
+      port_binding:
+        type: map
+      environment:
+        type: map
+    interfaces:
+      Standard:
+        type: tosca.interfaces.node.lifecycle.Standard
+        create:
+          implementation: docker_plugin.tasks.create
+        start:
+          implementation: docker_plugin.tasks.start
+          inputs:
+            task_retries: 30
+            task_retry_interval: 10
+        stop:
+          implementation: docker_plugin.tasks.stop
+          inputs:
+            task_retries: 30
+            task_retry_interval: 10
+        delete:
+          implementation: docker_plugin.tasks.delete
